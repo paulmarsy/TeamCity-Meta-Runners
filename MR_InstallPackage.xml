@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-runner name="PackageManagement::InstallPackage">
+  <description>Installs a package using PowerShell 5 PackageManagement</description>
+  <settings>
+    <parameters>
+      <param name="mr.PackageManagement.Package" value="" spec="text description='Package id' display='normal' label='Package:' validationMode='not_empty'" />
+    </parameters>
+    <build-runners>
+      <runner name="" type="jetbrains_powershell">
+        <parameters>
+          <param name="jetbrains_powershell_execution" value="PS1" />
+          <param name="jetbrains_powershell_noprofile" value="true" />
+          <param name="jetbrains_powershell_errorToError" value="error" />
+          <param name="jetbrains_powershell_script_mode" value="CODE" />
+          <param name="jetbrains_powershell_bitness" value="x86" />
+          <param name="teamcity.step.mode" value="default" />
+          <param name="jetbrains_powershell_script_code"><![CDATA[[CmdletBinding()]
+Param (
+    [string] $Package = "%mr.PackageManagement.Package%"
+)
+
+try {
+    Install-PackageProvider -Name NuGet -Force
+    if (Get-Package  | ? Name -eq $Package) {
+        Write-Host "##teamcity[message text='$Package already installed']"
+    } else {
+        if (Find-Package -Name $Package -ErrorAction Ignore) {
+           Write-Host "##teamcity[progressMessage '$Package not installed; installing $Package']"
+           Install-Package -Name $Package -Force
+        } else {
+            Write-Host "##teamcity[buildProblem description='$Package not found'']"
+        }
+    }
+}
+catch {
+    Write-Host "##teamcity[buildStatus text='$_' status='FAILURE']"
+    Write-Host "##teamcity[message text='$_' status='ERROR']"
+    exit 1
+}]]></param>
+        </parameters>
+      </runner>
+    </build-runners>
+    <requirements />
+  </settings>
+</meta-runner>
