@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-runner name="Invoke WebRequest">
+  <description>Invokes a HTTP Web Request</description>
+  <settings>
+    <parameters>
+      <param name="mr.WebRequest.Uri" value="" spec="text label='URI' validationMode='not_empty' display='prompt'" />
+      <param name="mr.WebRequest.Method" value="" spec="select display='prompt' label='HTTP Method' data_10='Patch' data_02='Get' data_01='Default' data_08='Options' data_07='Trace' data_09='Merge' data_04='Post' data_03='Head' data_06='Delete' data_05='Put'" />
+      <param name="mr.WebRequest.Body" value="" spec="text display='prompt' label='Request body'" />
+    </parameters>
+    <build-runners>
+      <runner name="" type="jetbrains_powershell">
+        <parameters>
+          <param name="jetbrains_powershell_bitness" value="x86" />
+          <param name="jetbrains_powershell_execution" value="PS1" />
+          <param name="jetbrains_powershell_noprofile" value="true" />
+          <param name="jetbrains_powershell_errorToError" value="error" />
+          <param name="jetbrains_powershell_script_mode" value="CODE" />
+          <param name="teamcity.step.mode" value="default" />
+          <param name="jetbrains_powershell_script_code"><![CDATA[[CmdletBinding()]
+        param (
+            $Uri = "%mr.WebRequest.Uri%"
+            $Method = "%mr.WebRequest.Method%"
+            $Body = @{ %mr.WebRequest.Body% }
+        )
+        try {
+            Invoke-WebRequest -Uri $Uri -Body $Body -Method $Method -UseBasicParsing
+        catch {
+            Write-Host "##teamcity[buildStatus text='$_' status='FAILURE']"
+            Write-Host "##teamcity[message text='$_' status='ERROR']"
+            exit 1
+        }
+        ]]></param>
+        </parameters>
+      </runner>
+    </build-runners>
+  </settings>
+</meta-runner>
