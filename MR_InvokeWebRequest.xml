@@ -18,12 +18,13 @@
           <param name="teamcity.step.mode" value="default" />
           <param name="jetbrains_powershell_script_code"><![CDATA[[CmdletBinding()]
         param (
-            $Uri = "%mr.WebRequest.Uri%"
-            $Method = "%mr.WebRequest.Method%"
+            $Uri = "%mr.WebRequest.Uri%",
+            $Method = "%mr.WebRequest.Method%",
             $Body = @{ %mr.WebRequest.Body% }
         )
         try {
             Invoke-WebRequest -Uri $Uri -Body $Body -Method $Method -UseBasicParsing
+        }
         catch {
             Write-Host "##teamcity[buildStatus text='$_' status='FAILURE']"
             Write-Host "##teamcity[message text='$_' status='ERROR']"
