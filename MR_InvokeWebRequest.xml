@@ -20,7 +20,7 @@
         param (
             $Uri = "%mr.WebRequest.Uri%",
             $Method = "%mr.WebRequest.Method%",
-            $Body = @{ %mr.WebRequest.Body% }
+            $Body = "%mr.WebRequest.Body%"
         )
         try {
             Invoke-WebRequest -Uri $Uri -Body $Body -Method $Method -UseBasicParsing
