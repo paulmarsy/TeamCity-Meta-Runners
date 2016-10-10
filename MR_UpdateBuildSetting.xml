@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-runner name="Update Build Setting">
+  <description>Updates the build setting of a build definition (not build instance)</description>
+  <settings>
+    <parameters>
+      <param name="mr.username" value="" spec="text description='Username of a user who can update the build definition' display='normal' label='Username:' validationMode='not_empty'" />
+      <param name="mr.password" value="" spec="password description='Password of the user who can update the build definition' display='normal' label='Password:'" />
+      <param name="mr.Setting.Name" value="" spec="text display='prompt' label='Setting Name:'" />
+      <param name="mr.Setting.Value" value="" spec="text display='prompt' label='Setting Value:'" />
+      <param name="mr.Setting.Condition" value="$True" spec="text display='normal' label='Condition:' description='A (PowerShell) boolean expression if the setting should be updated'" />
+    </parameters>
+    <build-runners>
+      <runner name="" type="jetbrains_powershell">
+        <parameters>
+          <param name="jetbrains_powershell_bitness" value="x86" />
+          <param name="jetbrains_powershell_execution" value="PS1" />
+          <param name="jetbrains_powershell_noprofile" value="true" />
+          <param name="jetbrains_powershell_errorToError" value="error" />
+          <param name="jetbrains_powershell_script_mode" value="CODE" />
+          <param name="teamcity.step.mode" value="default" />
+          <param name="jetbrains_powershell_script_code"><![CDATA[[CmdletBinding()]
+        param (
+            $Username = "%mr.username%",
+            $Password = "%mr.password%",
+            $Name = "%mr.Setting.Name%",
+            $Value = "%mr.Setting.Value%"
+        )
+        try {
+            if (!([string]::IsNullOrWhiteSpace("%mr.Setting.Condition%"))) {
+              $shouldUpdate = %mr.Setting.Condition%
+            } else {
+              $shouldUpdate = $true
+            }
+            if ($shouldUpdate) {
+              $teamcityApiCredentials = New-Object System.Management.Automation.PSCredential($Username, (ConvertTo-SecureString $Password -AsPlainText -Force))
+              $result = Invoke-WebRequest -Uri "%teamcity.serverUrl%/httpAuth/app/rest/buildTypes/%system.teamcity.buildType.id%/settings/$Name"  -Body $Value -Method PUT -UseBasicParsing -Credential $teamcityApiCredentials -ContentType "text/plain"
+              if ($result.StatusCode -eq 200) {
+                Write-Host "Setting '$Name' has been updated to: $($result.Content)"
+              }
+            }
+        }
+        catch {
+            Write-Host "##teamcity[buildStatus text='$_' status='FAILURE']"
+            Write-Host "##teamcity[message text='$_' status='ERROR']"
+            exit 1
+        }
+        ]]></param>
+        </parameters>
+      </runner>
+    </build-runners>
+  </settings>
+</meta-runner>
