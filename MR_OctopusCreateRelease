@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-runner name="Octopus - Create Release">
+  <description>Creates releases in Octopus Deploy</description>
+  <settings>
+    <parameters>
+      <param name="mr.octopusurl" value="" spec="text description='Specify Octopus web portal URL' display='normal' label='Octopus Url:' validationMode='not_empty'" />
+      <param name="mr.apikey" value="" spec="password description='Specify Octopus API key. You can get this from your user page in the Octopus web portal.' display='normal' label='API Key:'" />
+      <param name="mr.project" value="" spec="text display='prompt' description='Enter the name of the Octopus project to create a release for' label='Octopus Project:'" />
+      <param name="mr.releasenumber" value="" spec="text display='prompt' description='The number to use for this release, e.g., 1.0.%build.number%.' label='Release Number'" />
+      <param name="mr.channel" value="$True" spec="text display='normal' description='The channel to create the release for' label='Channel:'" />
+      <param name="mr.commandlinearguments" value="$True" spec="text display='normal' description='Additional arguments to be passed to Octo.exe' label='Additional Command Line Arguments:'" />
+    </parameters>
+    <build-runners>
+      <runner name="" type="jetbrains_powershell">
+        <parameters>
+          <param name="jetbrains_powershell_bitness" value="x86" />
+          <param name="jetbrains_powershell_execution" value="PS1" />
+          <param name="jetbrains_powershell_noprofile" value="true" />
+          <param name="jetbrains_powershell_errorToError" value="error" />
+          <param name="jetbrains_powershell_script_mode" value="CODE" />
+          <param name="teamcity.step.mode" value="default" />
+          <param name="jetbrains_powershell_script_code"><![CDATA[if (!(Test-Path -Path '.\nuget.exe')) {
+            Invoke-WebRequest 'https://www.nuget.org/nuget.exe' -UseBasicParsing -OutFile '.\nuget.exe'
+          }
+
+          if (!(Test-Path -Path '.\OctopusTools')) {
+            .\nuget.exe Install OctopusTools -ExcludeVersion
+          }
+		Write-Host ".\OctopusTools\tools\octo.exe create-release --server '%mr.octopusurl%' --apikey '%mr.apikey%' --project '%mr.project%' --enableservicemessages --version '%mr.releasenumber%' --channel '%mr.channel%' --cancelontimeout %mr.commandlinearguments%"
+        
+          .\OctopusTools\tools\octo.exe create-release --server '%mr.octopusurl%' --apikey '%mr.apikey%' --project '%mr.project%' --enableservicemessages --version '%mr.releasenumber%' --channel '%mr.channel%' --cancelontimeout %mr.commandlinearguments%
+          
+          exit $LASTEXITCODE]]></param>
+        </parameters>
+      </runner>
+    </build-runners>
+  </settings>
+</meta-runner>
+
